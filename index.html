@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090910">
+<title>HiddenPlay — Descobre jogos escondidos</title>
+<style>
+:root{--bg:#090910;--panel:#12121d;--panel2:#191929;--text:#f4f3ff;--muted:#a6a5bd;--purple:#a855f7;--cyan:#4de3ff;--line:#2b2a40}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#30204c 0,transparent 35%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+a{color:inherit;text-decoration:none}button,input,select{font:inherit}.wrap{max-width:1180px;margin:auto;padding:0 18px}
+header{position:sticky;top:0;z-index:10;background:#090910eF;border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}
+.nav{height:68px;display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{font-weight:900;letter-spacing:-.8px;font-size:22px}.brand span{color:var(--purple)}.navtag{color:var(--muted);font-size:13px}
+.hero{padding:48px 0 28px}.eyebrow{color:var(--cyan);font-weight:800;text-transform:uppercase;letter-spacing:2px;font-size:11px}.hero h1{font-size:clamp(34px,7vw,62px);line-height:1.02;letter-spacing:-2px;margin:13px 0}.hero h1 span{background:linear-gradient(90deg,#c084fc,#4de3ff);-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{max-width:610px;color:var(--muted);line-height:1.65;margin:0 0 22px}.hero-actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:12px 17px;font-weight:800;cursor:pointer;background:linear-gradient(100deg,#a855f7,#7048ff);color:white;display:inline-flex;align-items:center;justify-content:center}.btn.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text)}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 4px}.stat{padding:14px;background:#ffffff07;border:1px solid var(--line);border-radius:14px}.stat strong{display:block;font-size:19px}.stat small{color:var(--muted)}
+.notice{margin:22px 0;padding:13px 15px;border:1px solid #60448b;background:#211633;border-radius:12px;color:#e4d5ff;font-size:13px;line-height:1.5}
+.sectionhead{display:flex;align-items:end;justify-content:space-between;gap:14px;margin:34px 0 16px}.sectionhead h2{margin:0;font-size:24px;letter-spacing:-.6px}.sectionhead p{margin:5px 0 0;color:var(--muted);font-size:13px}
+.controls{display:grid;grid-template-columns:1fr 155px;gap:10px;margin-bottom:17px}.field{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);background:var(--panel);color:var(--text);outline:none}.field:focus{border-color:var(--purple)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}.chip{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);cursor:pointer;font-size:13px}.chip.active{background:#5c2c85;color:#fff;border-color:#a855f7}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.game{overflow:hidden;border:1px solid var(--line);background:linear-gradient(180deg,#171725,#101019);border-radius:17px;transition:transform .18s,border-color .18s}.game:hover{transform:translateY(-3px);border-color:#8051b4}.cover{height:155px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(135deg,var(--c1),var(--c2))}.cover:before,.cover:after{content:"";position:absolute;border:1px solid #ffffff35;border-radius:50%;width:190px;height:190px;transform:rotate(30deg)}.cover:after{width:130px;height:130px}.cover .glyph{font-size:54px;filter:drop-shadow(0 8px 18px #0008);z-index:1}.tag{position:absolute;top:10px;left:10px;background:#080811bd;border:1px solid #ffffff30;padding:5px 8px;border-radius:7px;font-size:10px;font-weight:800;letter-spacing:.5px}.gamebody{padding:14px}.gamebody h3{margin:0 0 6px;font-size:17px}.gamebody p{margin:0;color:var(--muted);font-size:12px;line-height:1.5;min-height:37px}.meta{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:14px}.genre{font-size:11px;color:#c8b3ed}.price{font-size:13px;font-weight:900}.cardbtn{width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #574071;background:#241a32;color:#f4eaff;font-weight:800;cursor:pointer}
+.empty{grid-column:1/-1;padding:35px;text-align:center;border:1px dashed var(--line);border-radius:14px;color:var(--muted)}
+footer{margin-top:48px;border-top:1px solid var(--line);padding:25px 0 35px;color:var(--muted);font-size:12px;line-height:1.7}.footrow{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+dialog{max-width:460px;width:calc(100% - 28px);background:var(--panel);color:var(--text);border:1px solid #5c3b7d;border-radius:18px;padding:0;box-shadow:0 20px 90px #000a}dialog::backdrop{background:#000b;backdrop-filter:blur(4px)}.modalhead{height:125px;display:grid;place-items:center;font-size:46px;background:linear-gradient(135deg,#512477,#132d51)}.modalbody{padding:20px}.modalbody p{color:var(--muted);line-height:1.6;font-size:14px}.modalbody .btn{width:100%;margin-top:10px}.close{float:right;background:none;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:5px 9px;cursor:pointer}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cover{height:140px}.hero{padding-top:34px}}
+@media(max-width:480px){.grid{grid-template-columns:1fr 1fr;gap:9px}.wrap{padding:0 12px}.cover{height:115px}.cover .glyph{font-size:42px}.gamebody{padding:10px}.gamebody h3{font-size:14px}.gamebody p{font-size:11px;min-height:48px}.meta{align-items:start;flex-direction:column;gap:5px}.sectionhead h2{font-size:21px}.navtag{display:none}.stats{gap:7px}.stat{padding:10px}.stat strong{font-size:16px}.stat small{font-size:10px}.controls{grid-template-columns:1fr}.hero h1{letter-spacing:-1.5px}}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><a class="brand" href="#"><span>HIDDEN</span>PLAY</a><span class="navtag">JOGOS INDEPENDENTES · NOVAS DESCOBERTAS</span><a class="btn secondary" href="#catalogo">Explorar jogos</a></div></header>
+<main class="wrap">
+<section class="hero">
+<div class="eyebrow">O próximo jogo favorito está escondido</div>
+<h1>Grandes jogos.<br><span>Pequenos holofotes.</span></h1>
+<p>Descobre jogos independentes criados por talentos que merecem ser vistos. Explora novos mundos, encontra projetos originais e apoia os seus criadores.</p>
+<div class="hero-actions"><a class="btn" href="#catalogo">🎮 Explorar catálogo</a><a class="btn secondary" href="#sobre">Como funciona</a></div>
+<div class="stats"><div class="stat"><strong id="gameCount">06</strong><small>jogos de demonstração</small></div><div class="stat"><strong>Indie</strong><small>talento independente</small></div><div class="stat"><strong>Em evolução</strong><small>projeto em construção</small></div></div>
+<div class="notice">✨ <strong>Versão de demonstração:</strong> os jogos abaixo são exemplos fictícios para testar o catálogo. Ainda não estão à venda nem incluem downloads reais.</div>
+</section>
+<section id="catalogo">
+<div class="sectionhead"><div><h2>Descobre o catálogo</h2><p>Filtra, pesquisa e abre os detalhes de cada jogo.</p></div></div>
+<div class="controls"><input id="search" class="field" type="search" placeholder="🔎 Procurar um jogo..." aria-label="Procurar jogo"><select id="sort" class="field" aria-label="Ordenar catálogo"><option value="featured">Em destaque</option><option value="az">Nome: A–Z</option><option value="price">Preço: menor primeiro</option></select></div>
+<div class="filters" id="filters"><button class="chip active" data-genre="Todos">Todos</button><button class="chip" data-genre="Aventura">Aventura</button><button class="chip" data-genre="Ação">Ação</button><button class="chip" data-genre="Estratégia">Estratégia</button><button class="chip" data-genre="Corrida">Corrida</button><button class="chip" data-genre="Puzzle">Puzzle</button></div>
+<div class="grid" id="grid"></div>
+</section>
+<section id="sobre">
+<div class="sectionhead"><div><h2>Talento merece ser descoberto.</h2><p>Uma futura montra para criadores independentes.</p></div></div>
+<div class="notice">És um criador? Na versão futura, poderás submeter o teu jogo para análise. Só serão publicados jogos e ficheiros que o criador tenha direito de distribuir. Contactos e submissões ainda não estão ativos nesta demonstração.</div>
+</section>
+</main>
+<footer><div class="wrap footrow"><div><strong style="color:#f4f3ff">HIDDENPLAY</strong><br>Descobre o que ainda não conheces.</div><div>Protótipo inicial · Catálogo de demonstração<br>© <span id="year"></span> HiddenPlay</div></div></footer>
+<dialog id="details"><div class="modalhead" id="modalIcon">🌌</div><div class="modalbody"><button class="close" id="closeModal">Fechar ✕</button><h2 id="modalTitle"></h2><div id="modalGenre" class="genre"></div><p id="modalDesc"></p><p id="modalPrice"></p><button class="btn" id="modalAction">Disponibilidade em breve</button></div></dialog>
+<script>
+const games=[
+{id:1,name:"Neon Drift",genre:"Corrida",price:0,priceLabel:"Grátis (demo)",icon:"🏎️",colors:["#5420a4","#087b91"],desc:"Corridas futuristas, curvas apertadas e uma cidade iluminada por néon. Projeto fictício para demonstrar a ficha do jogo.",featured:1},
+{id:2,name:"Ashen Vale",genre:"Aventura",price:3.5,priceLabel:"Preço de exemplo: 3,50 USD",icon:"🗡️",colors:["#773c45","#251d47"],desc:"Explora ruínas antigas, resolve mistérios e descobre o que aconteceu ao reino. Projeto fictício para demonstração.",featured:2},
+{id:3,name:"Pocket Tactics",genre:"Estratégia",price:2,priceLabel:"Preço de exemplo: 2,00 USD",icon:"♟️",colors:["#1c665f","#23385c"],desc:"Estratégia por turnos em partidas rápidas. Aprende o terreno e supera os teus adversários. Projeto fictício.",featured:3},
+{id:4,name:"Orbit Breaker",genre:"Ação",price:4,priceLabel:"Preço de exemplo: 4,00 USD",icon:"🚀",colors:["#234a9a","#6e2d87"],desc:"Enfrenta desafios no espaço e atravessa campos de asteroides. Projeto fictício para testar o catálogo.",featured:4},
+{id:5,name:"Little Lantern",genre:"Puzzle",price:1.5,priceLabel:"Preço de exemplo: 1,50 USD",icon:"🏮",colors:["#a04d22","#5b285f"],desc:"Pequenos enigmas, luzes misteriosas e níveis pensados para jogar ao teu ritmo. Projeto fictício.",featured:5},
+{id:6,name:"Jungle Echo",genre:"Aventura",price:0,priceLabel:"Grátis (demo)",icon:"🌿",colors:["#1c6b48","#143c54"],desc:"Atravessa uma floresta cheia de segredos e encontra caminhos escondidos. Projeto fictício para demonstração.",featured:6}
+];
+let activeGenre="Todos";
+const grid=document.getElementById("grid"), search=document.getElementById("search"), sort=document.getElementById("sort");
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function render(){
+ let q=search.value.trim().toLowerCase();
+ let list=games.filter(g=>(activeGenre==="Todos"||g.genre===activeGenre)&&(g.name+" "+g.genre+" "+g.desc).toLowerCase().includes(q));
+ if(sort.value==="az")list.sort((a,b)=>a.name.localeCompare(b.name));
+ if(sort.value==="price")list.sort((a,b)=>a.price-b.price);
+ if(sort.value==="featured")list.sort((a,b)=>a.featured-b.featured);
+ document.getElementById("gameCount").textContent=String(games.length).padStart(2,"0");
+ grid.innerHTML=list.length?list.map(g=>`<article class="game"><div class="cover" style="--c1:${g.colors[0]};--c2:${g.colors[1]}"><span class="tag">${escapeHTML(g.genre.toUpperCase())}</span><span class="glyph">${g.icon}</span></div><div class="gamebody"><h3>${escapeHTML(g.name)}</h3><p>${escapeHTML(g.desc)}</p><div class="meta"><span class="genre">${escapeHTML(g.genre)}</span><span class="price">${escapeHTML(g.priceLabel)}</span></div><button class="cardbtn" onclick="openDetails(${g.id})">Ver detalhes ↗</button></div></article>`).join(""):`<div class="empty">Não encontrámos jogos com essa pesquisa. Experimenta outra palavra ou categoria.</div>`;
+}
+function openDetails(id){
+ const g=games.find(x=>x.id===id);if(!g)return;
+ document.getElementById("modalIcon").textContent=g.icon;
+ document.getElementById("modalIcon").style.background=`linear-gradient(135deg,${g.colors[0]},${g.colors[1]})`;
+ document.getElementById("modalTitle").textContent=g.name;
+ document.getElementById("modalGenre").textContent=g.genre+" · Jogo fictício de demonstração";
+ document.getElementById("modalDesc").textContent=g.desc;
+ document.getElementById("modalPrice").textContent=g.priceLabel;
+ document.getElementById("modalAction").textContent="Downloads e compras ainda não disponíveis";
+ document.getElementById("details").showModal();
+}
+document.querySelectorAll("[data-genre]").forEach(b=>b.addEventListener("click",()=>{activeGenre=b.dataset.genre;document.querySelectorAll("[data-genre]").forEach(x=>x.classList.toggle("active",x===b));render()}));
+search.addEventListener("input",render);sort.addEventListener("change",render);
+document.getElementById("closeModal").addEventListener("click",()=>document.getElementById("details").close());
+document.getElementById("details").addEventListener("click",e=>{if(e.target.id==="details")e.target.close()});
+document.getElementById("year").textContent=new Date().getFullYear();
+render();
+</script>
+</body>
+</html>
