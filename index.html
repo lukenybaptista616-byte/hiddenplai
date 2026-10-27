@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HiddenPlay — Jogos indie para Android</title>
+<meta name="description" content="Descobre jogos Android criados por pequenos desenvolvedores. HiddenPlay dá visibilidade a quem cria.">
+<meta property="og:title" content="HiddenPlay — Jogos indie para Android">
+<meta property="og:description" content="Jogos Android de pequenos criadores, num só sítio.">
+<meta property="og:image" content="/og.png">
+<meta name="theme-color" content="#0a0a12">
+<style>
+:root{--bg:#0a0a12;--card:#14141f;--line:#26263a;--tx:#ecebf5;--mut:#9391ab;--pu:#8b5cf6;--gr:#2dff9a}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#0a0a12ee;backdrop-filter:blur(8px);z-index:5}
+.logo{font-weight:800;font-size:1.3rem;letter-spacing:-.5px;cursor:pointer}.logo b{color:var(--gr)}
+main{max-width:1100px;margin:0 auto;padding:16px}
+input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:90px}
+button{width:auto;cursor:pointer;font-weight:600}
+button:hover{border-color:var(--pu)}button.p{background:var(--pu);border-color:var(--pu)}button.d{border-color:#ff5c7a;color:#ff8da1}
+:focus-visible{outline:2px solid var(--gr);outline-offset:2px}
+.hero{padding:28px 0 12px}.hero h1{font-size:clamp(1.8rem,6vw,3rem);line-height:1.1;letter-spacing:-1px}.hero p{color:var(--mut);margin-top:8px;max-width:520px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0}.chips button{border-radius:99px;white-space:nowrap;padding:6px 14px}.chips .on{border-color:var(--gr);color:var(--gr)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
+.card:hover{border-color:var(--pu);transform:translateY(-2px)}
+.card img,.ph{width:100%;aspect-ratio:16/10;object-fit:cover;background:linear-gradient(135deg,#1c1840,#0f2a25);display:block}
+.card div{padding:12px}.card h3{font-size:1.05rem}.card p{color:var(--mut);font-size:.9rem;margin:4px 0 8px}
+.tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:99px;border:1px solid var(--pu);color:#c4b0ff;margin-right:4px}.tag.g{border-color:var(--gr);color:var(--gr)}
+.price{font-weight:700;color:var(--gr)}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:32px;text-align:center;color:var(--mut)}
+.detail img{width:100%;max-height:420px;object-fit:cover;border-radius:14px}.detail h1{margin:14px 0 4px}.meta{color:var(--mut);margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.f{display:grid;gap:10px;max-width:560px}
+.item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px;flex-wrap:wrap}
+footer{border-top:1px solid var(--line);color:var(--mut);padding:24px 16px;text-align:center;font-size:.9rem;margin-top:40px}
+#msg{color:#ff8da1;margin:8px 0}
+</style>
+</head>
+<body>
+<header><span class="logo" onclick="location.href='/'">Hidden<b>Play</b></span></header>
+<main id="app"></main>
+<footer>HiddenPlay dá visibilidade a jogos indie Android e aos seus criadores.<br>Contacto: <a href="mailto:Lukenybaptista616@gmail.com" style="color:var(--gr)">Lukenybaptista616@gmail.com</a> · <a href="#admin">Admin</a></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script>
+// ====== CONFIGURA AQUI (a chave "anon" é pública por design; a segurança está nas regras RLS) ======
+const SUPABASE_URL = 'https://rafyflllpvjwxsqjfysm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_TA5ke3vkos4qH65u0QtJBw_ny0c4qdF';
+// ================================================================================================
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const CATS = ['Futebol','Ação','Aventura','Corrida','Estratégia','Outros'];
+const $ = s => document.querySelector(s), app = $('#app');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = p => Number(p) === 0 ? 'Gratuito' : Number(p).toLocaleString('pt-PT',{minimumFractionDigits:2}) + ' €';
+const isNew = g => Date.now() - new Date(g.created_at) < 14*864e5;
+let games = [], cat = 'Todos', q = '';
+
+/* ---------- CATÁLOGO PÚBLICO ---------- */
+async function loadPublic(){
+  const {data,error} = await db.from('games').select('*').eq('status','published').order('featured',{ascending:false}).order('created_at',{ascending:false});
+  if(error){ app.innerHTML = '<div class="empty">Não foi possível carregar os jogos. Tenta novamente mais tarde.</div>'; return; }
+  games = data; renderCatalog();
+}
+function tags(g){ return (g.featured?'<span class="tag">Em destaque</span>':'') + (isNew(g)?'<span class="tag g">Novo</span>':'') + (Number(g.price)===0?'<span class="tag g">Gratuito</span>':''); }
+function renderCatalog(){
+  const list = games.filter(g => (cat==='Todos'||g.category===cat) && (g.name+g.short_desc+g.creator).toLowerCase().includes(q.toLowerCase()));
+  const feat = list.filter(g=>g.featured);
+  app.innerHTML = `<section class="hero"><h1>Jogos que ainda não conheces.</h1><p>Jogos Android feitos por pequenos criadores. Descobre, pesquisa e partilha.</p></section>
+  <input id="s" type="search" placeholder="Pesquisar jogos…" value="${esc(q)}">
+  <div class="chips">${['Todos',...CATS].map(c=>`<button class="${c===cat?'on':''}" data-c="${c}">${c}</button>`).join('')}</div>
+  ${!games.length ? '<div class="empty">Ainda não há jogos publicados. Volta em breve!</div>' :
+    !list.length ? '<div class="empty">Nenhum jogo encontrado.</div>' :
+    (feat.length&&cat==='Todos'&&!q?`<h2 style="margin:8px 0">Em destaque</h2><div class="grid">${feat.map(card).join('')}</div><h2 style="margin:20px 0 8px">Todos os jogos</h2>`:'')+`<div class="grid">${list.map(card).join('')}</div>`}`;
+  $('#s').oninput = e => { q = e.target.value; const p=e.target.selectionStart; renderCatalog(); const n=$('#s'); n.focus(); n.setSelectionRange(p,p); };
+  app.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { cat = b.dataset.c; renderCatalog(); });
+  app.querySelectorAll('[data-g]').forEach(c => c.onclick = () => location.href = '/?jogo=' + c.dataset.g);
+}
+function card(g){ return `<article class="card" data-g="${esc(g.slug)}">${g.cover_url?`<img loading="lazy" src="${esc(g.cover_url)}" alt="Capa de ${esc(g.name)}">`:'<div class="ph"></div>'}<div>${tags(g)}<h3>${esc(g.name)}</h3><p>${esc(g.short_desc)}</p><span class="price">${money(g.price)}</span> <span style="color:var(--mut);font-size:.85rem">· ${esc(g.category)}</span></div></article>`; }
+
+async function renderDetail(slug){
+  const {data:g} = await db.from('games').select('*').eq('slug',slug).eq('status','published').maybeSingle();
+  if(!g){ app.innerHTML = '<div class="empty">Jogo não encontrado.<br><br><a href="/" style="color:var(--gr)">Ver catálogo</a></div>'; return; }
+  document.title = g.name + ' — HiddenPlay';
+  document.querySelector('meta[name=description]').content = g.short_desc;
+  document.querySelector('meta[property="og:title"]').content = g.name + ' — HiddenPlay';
+  document.querySelector('meta[property="og:description"]').content = g.short_desc;
+  if(g.cover_url) document.querySelector('meta[property="og:image"]').content = g.cover_url;
+  app.innerHTML = `<div class="detail"><p><a href="/" style="color:var(--gr)">‹ Catálogo</a></p>${g.cover_url?`<img src="${esc(g.cover_url)}" alt="Capa de ${esc(g.name)}">`:''}<h1>${esc(g.name)}</h1>
+  <div class="meta">por ${esc(g.creator)} · ${esc(g.category)}</div><div>${tags(g)}</div><p class="price" style="font-size:1.4rem;margin:10px 0">${money(g.price)}</p>
+  <p style="white-space:pre-wrap;max-width:680px">${esc(g.full_desc||g.short_desc)}</p>
+  <div class="row"><button class="p" id="sh">Partilhar</button></div></div>`;
+  $('#sh').onclick = async () => { const u = location.href; try{ navigator.share ? await navigator.share({title:g.name,url:u}) : (await navigator.clipboard.writeText(u), alert('Link copiado!')); }catch(e){} };
+}
+
+/* ---------- ADMINISTRAÇÃO ---------- */
+let all = [], fq = '', fs = 'todos';
+async function renderAdmin(){
+  const {data:{session}} = await db.auth.getSession();
+  if(!session) return loginView();
+  const {data:adm} = await db.from('admins').select('user_id').maybeSingle();
+  if(!adm){ app.innerHTML = '<div class="empty">Esta conta não tem permissão de administrador.<br><br><button id="out">Terminar sessão</button></div>'; $('#out').onclick = async()=>{await db.auth.signOut();renderAdmin();}; return; }
+  const {data} = await db.from('games').select('*').order('created_at',{ascending:false}); all = data || [];
+  adminList();
+}
+function loginView(msg=''){
+  app.innerHTML = `<h2>Entrar</h2><div class="f" style="margin-top:12px"><input id="em" type="email" placeholder="Email" autocomplete="username"><input id="pw" type="password" placeholder="Palavra-passe" autocomplete="current-password"><div id="msg">${esc(msg)}</div><button class="p" id="go">Entrar</button></div>`;
+  $('#go').onclick = async () => { const {error} = await db.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value}); error ? loginView('Email ou palavra-passe incorretos.') : renderAdmin(); };
+}
+const stLabel = {draft:'Rascunho',published:'Publicado',hidden:'Oculto'};
+function adminList(){
+  const l = all.filter(g => (fs==='todos'||g.status===fs) && g.name.toLowerCase().includes(fq.toLowerCase()));
+  app.innerHTML = `<div class="row"><button class="p" id="new">+ Novo jogo</button><button id="out">Sair</button></div>
+  <div class="row"><input id="fq" placeholder="Pesquisar no painel…" value="${esc(fq)}" style="flex:1"><select id="fs" style="width:auto">${['todos','draft','published','hidden'].map(s=>`<option value="${s}" ${s===fs?'selected':''}>${stLabel[s]||'Todos'}</option>`).join('')}</select></div>
+  ${l.map(g=>`<div class="item"><div><b>${esc(g.name)}</b> <span class="tag">${stLabel[g.status]}</span><br><small style="color:var(--mut)">${money(g.price)} · ${esc(g.category)}</small></div><div class="row" style="margin:0"><button data-e="${g.id}">Editar</button>${g.status==='published'?`<button data-s="hidden" data-i="${g.id}">Retirar</button>`:`<button class="p" data-s="published" data-i="${g.id}">Publicar</button>`}<button class="d" data-d="${g.id}">Eliminar</button></div></div>`).join('') || '<div class="empty" style="margin-top:12px">Sem jogos.</div>'}`;
+  $('#new').onclick = () => form(); $('#out').onclick = async()=>{await db.auth.signOut();renderAdmin();};
+  $('#fq').oninput = e => { fq=e.target.value; const p=e.target.selectionStart; adminList(); const n=$('#fq'); n.focus(); n.setSelectionRange(p,p); };
+  $('#fs').onchange = e => { fs=e.target.value; adminList(); };
+  app.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>form(all.find(g=>g.id===b.dataset.e)));
+  app.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{const {error}=await db.from('games').update({status:b.dataset.s,updated_at:new Date().toISOString()}).eq('id',b.dataset.i); error?alert('Erro: '+error.message):renderAdmin();});
+  app.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{ if(!confirm('Eliminar este jogo definitivamente?')) return; const {error}=await db.from('games').delete().eq('id',b.dataset.d); error?alert('Erro: '+error.message):renderAdmin();});
+}
+function form(g={}){
+  app.innerHTML = `<h2>${g.id?'Editar':'Novo'} jogo</h2><div class="f" style="margin-top:12px">
+  <input id="n" placeholder="Nome do jogo" value="${esc(g.name)}"><input id="sd" placeholder="Descrição curta" maxlength="140" value="${esc(g.short_desc)}">
+  <textarea id="fd" placeholder="Descrição completa">${esc(g.full_desc)}</textarea>
+  <select id="c">${CATS.map(c=>`<option ${c===g.category?'selected':''}>${c}</option>`).join('')}</select>
+  <input id="cr" placeholder="Nome do criador" value="${esc(g.creator)}"><input id="p" type="number" min="0" step="0.01" placeholder="Preço (€) — 0 = gratuito" value="${g.price??0}">
+  <label>Capa: <input id="img" type="file" accept="image/*"></label>${g.cover_url?`<img src="${esc(g.cover_url)}" style="max-width:200px;border-radius:10px" alt="">`:''}
+  <label><input id="ft" type="checkbox" style="width:auto" ${g.featured?'checked':''}> Em destaque</label>
+  <div id="msg"></div><div class="row"><button class="p" id="sv" data-st="published">Publicar</button><button id="dr" data-st="draft">Guardar rascunho</button><button id="cx">Cancelar</button></div></div>`;
+  $('#cx').onclick = renderAdmin;
+  [$('#sv'),$('#dr')].forEach(b => b.onclick = async () => {
+    const name = $('#n').value.trim(); if(!name) return $('#msg').textContent='Escreve o nome do jogo.';
+    b.disabled = true; let cover_url = g.cover_url || null; const f = $('#img').files[0];
+    if(f){ const path = Date.now()+'-'+f.name.replace(/[^\w.-]/g,'_'); const up = await db.storage.from('capas').upload(path,f); if(up.error){ b.disabled=false; return $('#msg').textContent='Erro na imagem: '+up.error.message; } cover_url = db.storage.from('capas').getPublicUrl(path).data.publicUrl; }
+    const row = {name,short_desc:$('#sd').value.trim(),full_desc:$('#fd').value.trim(),category:$('#c').value,creator:$('#cr').value.trim(),price:Math.max(0,Number($('#p').value)||0),cover_url,featured:$('#ft').checked,status:b.dataset.st,updated_at:new Date().toISOString()};
+    const {error} = g.id ? await db.from('games').update(row).eq('id',g.id) : await db.from('games').insert({...row,slug:name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Math.random().toString(36).slice(2,6)});
+    b.disabled=false; error ? $('#msg').textContent='Erro: '+error.message : renderAdmin();
+  });
+}
+
+/* ---------- ROTAS ---------- */
+(function route(){
+  const slug = new URLSearchParams(location.search).get('jogo');
+  if(location.hash==='#admin'){ renderAdmin(); window.onhashchange=()=>location.reload(); }
+  else if(slug) renderDetail(slug); else loadPublic();
+})();
+</script>
+</body>
+</html>
